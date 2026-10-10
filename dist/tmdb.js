@@ -2,7 +2,7 @@
 const TMDB = {
   token: '', connected: false, loading: false, error: '', pages: new Map(), pendingDetails: new Set(), epoch: 0,
   genreNames: {28:'Azione',12:'Avventura',16:'Animazione',35:'Commedia',80:'Crime',99:'Documentario',18:'Dramma',10751:'Famiglia',14:'Fantasy',36:'Storico',27:'Horror',10402:'Musical',9648:'Mistero',10749:'Romantico',878:'Fantascienza',10770:'Film TV',53:'Thriller',10752:'Guerra',37:'Western'},
-  providers: [{id:8,name:'Netflix'},{id:9,name:'Prime Video'},{id:337,name:'Disney+'}],
+  providers: [{id:8,name:'Netflix'},{id:119,name:'Prime Video'},{id:337,name:'Disney+'}],
   changed() { if (typeof onTMDBChange === 'function') onTMDBChange(); },
   async request(path, params = {}, token = this.token) {
     if (!token) throw new Error('Collega TMDB per cercare nuovi film.');
@@ -24,6 +24,11 @@ const TMDB = {
     if (!token) throw new Error('Inserisci una chiave API o un token di lettura TMDB.');
     if (token.length > 4096 || /\s/.test(token)) throw new Error('Incolla soltanto la chiave o il token, senza spazi.');
     await this.request('configuration', {}, token);
+    try {
+      const catalog=await this.request('watch/providers/movie',{watch_region:'IT',language:'it-IT'},token);
+      const names={'Netflix':'Netflix','Prime Video':'Amazon Prime Video','Disney+':'Disney Plus'};
+      this.providers=this.providers.map(p=>{const found=(catalog.results||[]).find(x=>x.provider_name===names[p.name]);return found?{id:found.provider_id,name:p.name}:p;});
+    } catch { /* Known IDs remain a fallback when the provider directory is unavailable. */ }
     this.epoch++; this.token = token; this.connected = true; this.error = ''; this.pages.clear();
     try { sessionStorage.setItem('cineclub-tmdb-session', token); } catch { /* Connection works in memory too. */ }
     this.changed();
@@ -119,7 +124,7 @@ const TMDB = {
       m.director=(data.credits?.crew || []).filter(p=>p.job==='Director').map(p=>p.name).join(', ');
       m.actors=(data.credits?.cast || []).slice(0,8).map(p=>p.name);
       const region=data['watch/providers']?.results?.IT;
-      m.providers=(region?.flatrate || []).map(p=>({id:p.provider_id,name:this.providers.find(x=>x.id===p.provider_id)?.name || p.provider_name}));
+      m.providers=(region?.flatrate || []).map(p=>({id:p.provider_id,name:this.providers.find(x=>x.id===p.provider_id)?.name || (/^(Amazon )?Prime Video$/i.test(p.provider_name)?'Prime Video':p.provider_name==='Disney Plus'?'Disney+':p.provider_name)}));
       m.watchLink=region?.link || '';
       m.tmdbDetailed=true;
       if (typeof state!=='undefined' && state.choices[m.id]==='like') {
