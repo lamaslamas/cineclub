@@ -20,7 +20,7 @@ python -m http.server 4173 --directory dist
 
 ## Funzionalità
 
-- Destra: mi piace; sinistra: non mi piace; su: watchlist; giù: non visto.
+- Destra: mi piace; sinistra: non mi piace; su: watchlist; giù: non mi interessa.
 - Pulsanti, trascinamento e frecce della tastiera.
 - Percorso iniziale con 25 film; catalogo locale di 40 film.
 - Watchlist, annulla, cronologia delle scelte e affinità per genere.
@@ -37,7 +37,7 @@ python -m http.server 4173 --directory dist
 - `dist/assets/`: locandine e copertine.
 - `server.mjs`: server locale senza dipendenze.
 
-Il sistema di raccomandazione pesa generi (3), regista (7), attori (4) e decennio (1). I dislike hanno peso -0,75. Watchlist e non visti non influenzano il punteggio. I film votati vengono esclusi dai consigli.
+Il sistema di raccomandazione pesa generi (3), regista (7), attori (4) e decennio (1). I dislike hanno peso -0,75. Watchlist e film che non interessano non influenzano il punteggio. I film votati e quelli segnati come “Non mi interessa” vengono esclusi dai consigli. Le vecchie scelte “Non visto” restano salvate come “Saltato in precedenza”.
 
 ## Verifica
 
