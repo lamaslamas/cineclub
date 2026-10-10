@@ -91,8 +91,9 @@ const DataFiles = {
     }catch(e){this.pending=null;toast(e instanceof SyntaxError?'Il file JSON non è valido. Nessun dato è stato modificato.':e.message);}
     finally{$('#backup-input').value='';}
   },
-  restore(mode) {
-    if(!this.pending)return;
+  restore(mode, quiet=false) {
+    if(!this.pending)return false;
+    if(!quiet&&Account.user&&!Account.ready){toast('Completa prima il recupero del tuo profilo.');return false;}
     try {
       const incoming=this.pending,nextMovies=movies.map(m=>({...m})),mapping=new Map();
       for(const record of incoming.records) {
@@ -123,14 +124,15 @@ const DataFiles = {
         for(let i=0;i<keys.length;i++)try{before[i]===null?localStorage.removeItem(keys[i]):localStorage.setItem(keys[i],before[i]);}catch{}
         throw Error('Spazio di salvataggio insufficiente. I dati attuali restano invariati.');
       }
-      movies.splice(0,movies.length,...nextMovies);state=next;this.pending=null;$('#backup-dialog').close();updateGenres();this.applyPreferences();render();toast(mode==='replace'?'Backup ripristinato.':'Backup unito ai dati attuali.');
-    }catch(e){toast(e.message);}
+      movies.splice(0,movies.length,...nextMovies);state=next;this.pending=null;$('#backup-dialog').close();updateGenres();this.applyPreferences();render();if(!quiet){Account.changed();toast(mode==='replace'?'Backup ripristinato.':'Backup unito ai dati attuali.');}return true;
+    }catch(e){toast(e.message);return false;}
   },
   async importCSV(file) {
     if(!file)return;
     try {
       if(file.size>5*1024*1024)throw Error('Scegli un CSV sotto i 5 MB.');
       const rows=parseCSV(await file.text());if(!rows.length)throw Error('Il CSV è vuoto.');
+      if(Account.user&&!Account.ready)throw Error('Completa prima il recupero del tuo profilo.');
       const header=rows.shift().map(s=>s.trim().toLowerCase());const title=header.includes('title')?header.indexOf('title'):header.indexOf('name'),year=header.indexOf('year'),rating=header.indexOf('rating'),tmdb=header.indexOf('tmdbid'),status=header.indexOf('cineclubstatus');
       const isWatchlist=/watchlist/i.test(file.name);
       if(title<0&&tmdb<0)throw Error('Il CSV deve contenere Title, Name oppure tmdbID.');

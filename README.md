@@ -26,7 +26,7 @@ python -m http.server 4173 --directory dist
 - Watchlist, annulla, cronologia delle scelte e affinità per genere.
 - Consigli con spiegazione, filtri per genere, anno, durata e disponibilità in abbonamento in Italia tramite TMDB.
 - Importazione ratings.csv di Letterboxd (Name, Year, Rating). Voti da 3 a 5 diventano like; voti inferiori diventano dislike. I titoli fuori catalogo e i voti mancanti vengono contati e ignorati.
-- Dati conservati nel localStorage del browser. Non si sincronizzano tra browser, domini o dispositivi. Il trasferimento del codice non trasferisce le preferenze già registrate sul vecchio dominio.
+- Dati conservati nel localStorage del browser; sincronizzazione con account Google predisposta e attivabile configurando Supabase (vedi sotto). Il trasferimento del codice non trasferisce le preferenze già registrate sul vecchio dominio.
 
 ## Struttura
 
@@ -37,6 +37,7 @@ python -m http.server 4173 --directory dist
 - `dist/expanded-catalog.js`: catalogo offline aggiuntivo.
 - `dist/tmdb.js`: API, paginazione, ricerca, credenziali di sessione e cache dei film TMDB.
 - `dist/data-files.js`: backup, ripristino, CSV e conservazione dei voti importati.
+- `dist/account.js`, `dist/account-config.js`, `supabase/account.sql`: accesso Google, configurazione pubblica e profili privati nel database.
 - `dist/assets/`: locandine e copertine.
 - `server.mjs`: server locale senza dipendenze.
 
@@ -67,7 +68,26 @@ L’importazione accetta sia `Name` (export Letterboxd) sia `Title` (formato di 
 
 I filtri sono salvati anche tra aggiornamenti della pagina. I backup sono validati prima di qualsiasi modifica; file non validi non alterano i dati correnti. Il ripristino interrompe l’operazione se non c’è spazio sufficiente nel browser.
 
-Questi file vengono generati sul dispositivo del visitatore: GitHub non riceve gusti, watchlist o backup. Non è ancora disponibile la sincronizzazione con un account.
+Questi file vengono generati sul dispositivo del visitatore: GitHub non riceve gusti, watchlist o backup.
+
+## Account Google e sincronizzazione (da configurare)
+
+L'integrazione è predisposta, ma **non è attiva finché il proprietario non configura Supabase e Google**. Il pulsante Accedi indica questo stato e non promette un accesso funzionante. La versione locale resta utilizzabile.
+
+1. Crea un progetto su [Supabase](https://supabase.com/dashboard). Nel SQL Editor esegui [`supabase/account.sql`](supabase/account.sql). La tabella conserva una copia privata del profilo; ogni utente può leggere soltanto la propria riga. La funzione di salvataggio verifica identità e revisione prima di aggiornare i dati.
+2. In Authentication → URL Configuration imposta Site URL `https://lamaslamas.github.io/cineclub/` e aggiungi lo stesso indirizzo esatto alla lista Redirect URLs. Per prove locali aggiungi `http://localhost:4173/` e usa quel dominio nel browser.
+3. Segui la [configurazione ufficiale Google per Supabase](https://supabase.com/docs/guides/auth/social-login/auth-google): crea un client OAuth di tipo Web application in Google Cloud, configura la schermata di consenso e imposta come Authorized redirect URI `https://<project-ref>.supabase.co/auth/v1/callback`, copiandolo dal provider Google in Supabase. Durante la modalità Testing, aggiungi gli indirizzi Google autorizzati alla lista test users. Abilita il provider Google in Authentication → Sign In / Providers, con Client ID e Client Secret. **Il Client Secret va soltanto in Supabase.**
+4. In [`dist/account-config.js`](dist/account-config.js) inserisci Project URL e **publishable key** (`sb_publishable_…`), disponibili nelle impostazioni API del progetto. È accettata anche la vecchia chiave `anon`. Sono configurazioni pubbliche per il browser; **non usare mai una secret key, una service_role o un segreto OAuth**. Pubblica il commit e attendi GitHub Pages.
+
+Il client ufficiale Supabase JS 2.99.1 è incluso in `dist/vendor/supabase.js` per evitare dipendenze CDN a runtime; licenza MIT inclusa. Per rigenerarlo, installa `@supabase/supabase-js@2.99.1` ed `esbuild@0.25.12` in una directory temporanea, esporta `createClient` e compila con `--bundle --format=iife --global-name=CineclubSupabase --platform=browser --minify`. Nessuna dipendenza aggiuntiva è necessaria per avviare l'app.
+
+Con progetto configurato, Accedi → Accedi con Google usa OAuth PKCE. Sessione Google/Supabase e credenziale TMDB sono escluse dai backup e dai dati sincronizzati. Il profilo sincronizza scelte, watchlist, cronologia, voti numerici, filtri e i metadati necessari a recuperare i film su un nuovo dispositivo.
+
+Al primo accesso con dati locali e un profilo già esistente, l'app propone di unire le scelte locali (che hanno precedenza) o recuperare soltanto il profilo. Prima di scegliere si può scaricare un backup. Le modifiche sono salvate subito in una bozza locale separata per account e inviate dopo un breve intervallo; quando la rete torna, la sincronizzazione riprende. Se un altro dispositivo ha modificato il profilo, la revisione impedisce una sovrascrittura silenziosa e viene proposta una scelta esplicita tra copia locale e profilo. La sincronizzazione controlla gli aggiornamenti al ritorno nell'app o con Sincronizza / Riprova; non è una collaborazione in tempo reale.
+
+Uscire ripristina la copia locale precedente all'accesso; non lascia i gusti dell'account come dati dell'utente successivo. Le bozze personali rimangono nel browser per recuperare eventuali modifiche offline al prossimo accesso con lo stesso account. Su dispositivi condivisi, chi ha accesso al profilo del browser può leggere i dati locali: scaricare il backup e cancellare i dati del sito quando necessario. La credenziale TMDB resta legata alla sessione del browser, separata dall'account.
+
+Verifiche eseguite: Chromium con client Supabase ufficiale e risposte di servizio simulate (OAuth PKCE, migrazione, salvataggio, annulla, conflitti tra revisioni, offline e reload, uscita e recupero locale, unione esplicita e layout mobile); SQL eseguito su PostgreSQL locale PGlite (lettura isolata tra due utenti, accesso anonimo negato, aggiornamenti diretti negati, revisioni concorrenti e payload malformati). Backup e CSV verificati dopo l'integrazione. La configurazione live di OAuth richiede un progetto reale; rimane da completare un accesso Google reale e una prova di isolamento con due utenti nel progetto configurato.
 
 ## Connessione TMDB
 

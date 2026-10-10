@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "check": "node --check server.mjs && node --check dist/app.js && node --check dist/catalog.js && node --check dist/expanded-catalog.js && node --check dist/tmdb.js && node --check build-pages.mjs && node --check dist/data-files.js",
+    "check": "node --check server.mjs && node --check dist/app.js && node --check dist/catalog.js && node --check dist/expanded-catalog.js && node --check dist/tmdb.js && node --check build-pages.mjs && node --check dist/data-files.js && node --check dist/account.js && node --check dist/account-config.js",
     "build": "node build-pages.mjs"
   },
   "engines": {
