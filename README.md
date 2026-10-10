@@ -36,6 +36,7 @@ python -m http.server 4173 --directory dist
 - `dist/catalog.js`: catalogo iniziale e identificatori stabili.
 - `dist/expanded-catalog.js`: catalogo offline aggiuntivo.
 - `dist/tmdb.js`: API, paginazione, ricerca, credenziali di sessione e cache dei film TMDB.
+- `dist/data-files.js`: backup, ripristino, CSV e conservazione dei voti importati.
 - `dist/assets/`: locandine e copertine.
 - `server.mjs`: server locale senza dipendenze.
 
@@ -48,6 +49,25 @@ npm run check
 ```
 
 I flussi swipe, annulla, watchlist, persistenza, filtri, consigli e importazione CSV sono stati verificati in Chromium. Il layout è stato verificato anche a 390 px.
+
+## Backup e CSV Letterboxd
+
+In **I tuoi gusti → Salva e trasferisci** sono disponibili:
+
+- **Scarica backup**: file JSON con scelte (inclusi i film esclusi), watchlist, cronologia, filtri e metadati dei film necessari a ripristinarli. Le credenziali TMDB sono sempre escluse.
+- **Ripristina backup**: verifica il file e mostra un riepilogo. **Unisci** aggiorna le scelte contenute nel file e mantiene le altre; **Sostituisci** ripristina soltanto scelte, cronologia e impostazioni del backup. Entrambe recuperano i filtri. Gli ID TMDB equivalenti vengono uniti, evitando duplicati.
+- **Film visti · CSV**: esporta soltanto like e dislike per l’importazione dei film visti su Letterboxd.
+- **Watchlist · CSV**: esporta soltanto i film da vedere, da importare nella watchlist di Letterboxd.
+
+I CSV UTF-8 usano `Title,Year,tmdbID,Rating,CineclubStatus`. Il formato e gli importatori sono descritti nella [documentazione ufficiale Letterboxd](https://letterboxd.com/about/importing-data/). La colonna aggiuntiva `CineclubStatus` conserva la preferenza Cineclub ed è ignorata da Letterboxd. Non vengono inventati voti o date di visione: `Rating` contiene solo una valutazione in stelle precedentemente importata, altrimenti resta vuota.
+
+I voti importati da `ratings.csv` vengono ora conservati nella loro scala originale 0,5–5, oltre al like/dislike usato dai consigli. Una nuova scelta sullo stesso film rimuove il vecchio voto numerico; Annulla lo ripristina. I voti importati prima di questa modifica non possono essere ricostruiti: reimportare il CSV originale per recuperarli.
+
+L’importazione accetta sia `Name` (export Letterboxd) sia `Title` (formato di import), può trovare i film per `tmdbID` e accetta i CSV prodotti dall’app. I file chiamati `watchlist.csv` vengono importati come watchlist anche senza stelle.
+
+I filtri sono salvati anche tra aggiornamenti della pagina. I backup sono validati prima di qualsiasi modifica; file non validi non alterano i dati correnti. Il ripristino interrompe l’operazione se non c’è spazio sufficiente nel browser.
+
+Questi file vengono generati sul dispositivo del visitatore: GitHub non riceve gusti, watchlist o backup. Non è ancora disponibile la sincronizzazione con un account.
 
 ## Connessione TMDB
 
