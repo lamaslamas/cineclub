@@ -53,4 +53,20 @@ Le piattaforme del catalogo sono dimostrative, non disponibilità streaming veri
 
 Le locandine TMDB sono incluse localmente; tre copertine sono composizioni tipografiche originali. Prima della distribuzione pubblica/commerciale, verificare i diritti delle immagini e completare l'attribuzione prevista da TMDB. I font Google possono essere richiesti dal browser.
 
-Un repository GitHub privato conserva il codice e non pubblica automaticamente l'app. Non è configurato alcun deployment automatico e non sono incluse credenziali o configurazioni dell'hosting precedente.
+Un repository GitHub privato conserva il codice e non pubblica automaticamente l'app. Non sono incluse credenziali o configurazioni dell'hosting precedente.
+
+## GitHub Pages
+
+La pagina iniziale alla radice usa gli asset di `dist/` e funziona anche sotto il percorso `/cineclub/`.
+
+Dopo aver modificato `dist/index.html`, aggiorna la pagina iniziale:
+
+```sh
+npm run build
+```
+
+In GitHub: Settings → Pages → Deploy from a branch → main → / (root).
+
+URL previsto dopo l’attivazione: https://lamaslamas.github.io/cineclub/
+
+GitHub Pages pubblica l’app sul web, senza login ChatGPT. Le preferenze rimangono nel browser e sono separate da quelle salvate sul precedente dominio.
