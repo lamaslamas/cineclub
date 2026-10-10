@@ -41,3 +41,10 @@ const raw = [
 ['Eternal Sunshine of the Spotless Mind',2004,'Romantico,Fantascienza','Michel Gondry','Jim Carrey,Kate Winslet',108,8.3,'Puoi cancellare un ricordo, ma anche ciò che provi?','5MwkWH9tYHv3mV9OdYTMR5qreIz']
 ];
 const movies=raw.map((m,i)=>({id:i+1,title:m[0],year:m[1],genres:m[2].split(','),director:m[3],actors:m[4].split(','),minutes:m[5],rating:m[6],description:m[7],poster:'assets/movie-'+(i+1)+([34,37,39].includes(i+1)?'.svg':'.jpg'),color:['#716652','#543f59','#42616b','#997064'][i%4],provider:['Netflix','Prime Video','Disney+','Noleggio'][i%4]}));
+
+const starterTMDBIds=[157336,27205,438631,120467,313369,496243,155,680,550,13,329865,335984,244786,152601,129,37165,238,603,120,194,419430,354912,76341,597,105,872585,693134,10315,1124,83666,508442,348,98,976893,545611,807,11216,11324,4935,38];
+const starterOriginalTitles={7:'The Dark Knight',15:'Spirited Away',17:'The Godfather',18:'The Matrix',19:'The Lord of the Rings: The Fellowship of the Ring',20:'Amelie',25:'Back to the Future',27:'Dune: Part Two',28:'Fantastic Mr. Fox',33:'Gladiator',37:'Cinema Paradiso',39:"Howl's Moving Castle"};
+movies.forEach((m,i)=>{m.tmdbId=starterTMDBIds[i];m.originalTitle=starterOriginalTitles[m.id]||m.title;m.source='starter';m.providers=null;delete m.provider;});
+const movieKey=(title,year)=>String(title).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'')+':'+year;
+const existingMovieKeys=new Set(movies.flatMap(m=>[movieKey(m.title,m.year),movieKey(m.originalTitle,m.year)]));
+for(const m of expandedMovies){if(!existingMovieKeys.has(movieKey(m.title,m.year))){movies.push(m);existingMovieKeys.add(movieKey(m.title,m.year));}}

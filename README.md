@@ -22,9 +22,9 @@ python -m http.server 4173 --directory dist
 
 - Destra: mi piace; sinistra: non mi piace; su: watchlist; giù: non mi interessa.
 - Pulsanti, trascinamento e frecce della tastiera.
-- Percorso iniziale con 25 film; catalogo locale di 40 film.
+- Percorso iniziale con 25 film; catalogo offline di 2.897 film, inclusi i primi 40 e metadati dal dataset pubblico Vega.
 - Watchlist, annulla, cronologia delle scelte e affinità per genere.
-- Consigli con spiegazione, filtri per genere, anno, durata e piattaforma demo.
+- Consigli con spiegazione, filtri per genere, anno, durata e disponibilità in abbonamento in Italia tramite TMDB.
 - Importazione ratings.csv di Letterboxd (Name, Year, Rating). Voti da 3 a 5 diventano like; voti inferiori diventano dislike. I titoli fuori catalogo e i voti mancanti vengono contati e ignorati.
 - Dati conservati nel localStorage del browser. Non si sincronizzano tra browser, domini o dispositivi. Il trasferimento del codice non trasferisce le preferenze già registrate sul vecchio dominio.
 
@@ -33,7 +33,9 @@ python -m http.server 4173 --directory dist
 - `dist/index.html`: interfaccia.
 - `dist/style.css`: stile responsive.
 - `dist/app.js`: interazioni, salvataggio, filtri, import e consigli.
-- `dist/catalog.js`: catalogo e metadati.
+- `dist/catalog.js`: catalogo iniziale e identificatori stabili.
+- `dist/expanded-catalog.js`: catalogo offline aggiuntivo.
+- `dist/tmdb.js`: API, paginazione, ricerca, credenziali di sessione e cache dei film TMDB.
 - `dist/assets/`: locandine e copertine.
 - `server.mjs`: server locale senza dipendenze.
 
@@ -47,13 +49,29 @@ npm run check
 
 I flussi swipe, annulla, watchlist, persistenza, filtri, consigli e importazione CSV sono stati verificati in Chromium. Il layout è stato verificato anche a 390 px.
 
-## Limiti attuali
+## Connessione TMDB
 
-Le piattaforme del catalogo sono dimostrative, non disponibilità streaming verificate. Ogni film offre una ricerca su JustWatch. TMDB live, disponibilità aggiornata e filtro per abbonamenti personali restano da integrare.
+Nell’app premi **Collega TMDB** e inserisci il token di lettura API (consigliato) oppure la chiave API v3 del tuo account [TMDB](https://www.themoviedb.org/settings/api).
 
-Le locandine TMDB sono incluse localmente; tre copertine sono composizioni tipografiche originali. Prima della distribuzione pubblica/commerciale, verificare i diritti delle immagini e completare l'attribuzione prevista da TMDB. I font Google possono essere richiesti dal browser.
+La connessione è personale e diretta dal browser. Le credenziali restano in `sessionStorage` (o in memoria se non disponibile): non vengono incluse nel codice, nella cache film, nei voti o nel repository. Scollega cancella la credenziale ma conserva i film e i gusti. Una nuova sessione/browser può richiedere nuovamente la credenziale.
 
-Un repository GitHub privato conserva il codice e non pubblica automaticamente l'app. Non sono incluse credenziali o configurazioni dell'hosting precedente.
+Le pagine Discover sono caricate a gruppi di 20, con filtri remoti per genere, anno, durata e provider in Italia. La scheda recupera trame, locandine, durata, regia, cast e disponibilità in abbonamento. Per i like si recuperano anche film simili e raccomandazioni TMDB; questi aggiungono peso al sistema locale. I film già scelti non vengono riproposti; “Non mi interessa” li esclude dai consigli.
+
+I metadati TMDB dei film caricati sono salvati in una cache locale per conservare watchlist e voti dopo il refresh. Gli ID iniziali 1–40 restano invariati; i nuovi ID TMDB sono 1.000.000.000 + ID del servizio. I titoli già presenti vengono uniti per ID TMDB o titolo originale/anno.
+
+L’integrazione è stata verificata nel browser con risposte TMDB simulate: token/API key, paginazione, filtri, provider, errori e riprova, disconnessione, cache e conservazione delle scelte. La raggiungibilità reale dell’API è stata verificata; la verifica autenticata live richiede una credenziale personale, da inserire nell’app.
+
+Per un’app aperta a tutti senza chiedere una credenziale a ciascun utente, occorre un backend che custodisca il token del proprietario. GitHub Pages serve soltanto file statici: non inserire il token in file JS, HTML, JSON o segreti interpolati nella build pubblica.
+
+## Dati e limiti
+
+Il catalogo offline aggiuntivo proviene da [Vega movies.json](https://github.com/vega/vega-datasets/blob/main/data/movies.json), un dataset storico. I titoli possono essere in lingua originale e i metadati mancanti sono indicati come non disponibili. Non sono inventate trame, locandine, durata o disponibilità. TMDB arricchisce le schede quando connesso. I consigli sono mostrati a gruppi di 24 per mantenere reattiva la pagina.
+
+Le piattaforme demo sono state rimosse. La disponibilità in abbonamento è indicata solo quando fornita da TMDB; JustWatch resta accessibile per verificare noleggio, acquisto e aggiornamenti. I font Google possono essere richiesti dal browser.
+
+Il catalogo si può rigenerare da una copia locale del dataset usando `python scripts/expand-catalog.py /percorso/movies.json`. Non cambiare l’ordine del dataset sorgente senza migrare gli ID dei film aggiuntivi.
+
+This product uses the TMDB API but is not endorsed or certified by TMDB.
 
 ## GitHub Pages
 
